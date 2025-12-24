@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Country Size Ranking Game</title>
+    <title>World Stack</title>
     <style>
         * {
             margin: 0;
@@ -25,6 +25,7 @@
             border-radius: 1rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             padding: 2rem;
+            padding-left: 5rem;
         }
 
         .header {
@@ -109,6 +110,74 @@
 
         .countries-list {
             margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .size-indicator {
+            position: absolute;
+            left: -50px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1rem 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .size-label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+        }
+
+        .arrow {
+            font-size: 1.25rem;
+        }
+
+        .country-controls {
+            display: flex;
+            gap: 0.25rem;
+            margin-left: auto;
+        }
+
+        .move-btn {
+            background: #e5e7eb;
+            border: none;
+            border-radius: 0.25rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .move-btn:hover:not(:disabled) {
+            background: #d1d5db;
+        }
+
+        .move-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 3.5rem;
+            }
+
+            .size-indicator {
+                left: -40px;
+                font-size: 0.75rem;
+            }
         }
 
         .country-item {
@@ -335,7 +404,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Country Size Challenge</h1>
+            <h1>World Stack</h1>
             <div class="header-buttons">
                 <button class="info-btn" onclick="toggleModal()">
                     <span>ℹ️</span>
@@ -363,7 +432,18 @@
             <p>Drag and drop to arrange countries from <strong>smallest to largest</strong> by total area!</p>
         </div>
 
-        <div class="countries-list" id="countriesList"></div>
+        <div class="countries-list" id="countriesList">
+            <div class="size-indicator">
+                <div class="size-label">
+                    <span>Smallest</span>
+                    <span class="arrow">↓</span>
+                </div>
+                <div class="size-label">
+                    <span class="arrow">↓</span>
+                    <span>Largest</span>
+                </div>
+            </div>
+        </div>
 
         <button class="submit-btn" id="submitBtn" onclick="submitAnswer()">Submit Answer</button>
         <div class="results" id="results" style="display: none;"></div>
@@ -379,11 +459,11 @@
             <div class="modal-section">
                 <h3>🎯 Accuracy Score (0-100 points)</h3>
                 <p>You earn points for each country placed in the <strong>correct position</strong>.</p>
-                <div class="formula">(Correct Positions / 6) × 100</div>
+                <div class="formula">(Correct Positions / 4) × 100</div>
                 <ul>
-                    <li><strong>6/6 correct</strong> = 100 points</li>
-                    <li><strong>3/6 correct</strong> = 50 points</li>
-                    <li><strong>0/6 correct</strong> = 0 points</li>
+                    <li><strong>4/4 correct</strong> = 100 points</li>
+                    <li><strong>2/4 correct</strong> = 50 points</li>
+                    <li><strong>0/4 correct</strong> = 0 points</li>
                 </ul>
             </div>
 
@@ -402,12 +482,12 @@
                 <h3>🏆 Total Score</h3>
                 <div class="formula">Total = Accuracy Score + Time Bonus</div>
                 <div class="example-box">
-                    <strong>Example:</strong> Getting 5/6 countries correct in 30 seconds:
-                    <br>• Accuracy: (5/6) × 100 = <strong>83 points</strong>
+                    <strong>Example:</strong> Getting 3/4 countries correct in 30 seconds:
+                    <br>• Accuracy: (3/4) × 100 = <strong>75 points</strong>
                     <br>• Time Bonus: (100 - 30) × 0.5 = <strong>35 points</strong>
-                    <br>• <strong>Total: 118 points</strong>
+                    <br>• <strong>Total: 110 points</strong>
                 </div>
-                <p style="margin-top: 1rem;">The maximum possible score is <strong>150 points</strong> (perfect accuracy + fastest time).</p>
+                <p style="margin-top: 1rem;">The maximum possible score is <strong>150 points</strong> (perfect accuracy instantly).</p>
             </div>
         </div>
     </div>
@@ -538,7 +618,7 @@
         }
 
         function startNewGame() {
-            const shuffled = shuffle(COUNTRIES).slice(0, 6);
+            const shuffled = shuffle(COUNTRIES).slice(0, 4);
             gameState.countries = shuffled;
             gameState.userOrder = shuffled.map((_, i) => i);
             gameState.timer = 0;
@@ -569,7 +649,9 @@
 
         function renderCountries() {
             const list = document.getElementById('countriesList');
-            list.innerHTML = '';
+            // Clear only the country items, not the size indicator
+            const items = list.querySelectorAll('.country-item');
+            items.forEach(item => item.remove());
 
             gameState.userOrder.forEach((countryIndex, position) => {
                 const country = gameState.countries[countryIndex];
@@ -583,6 +665,10 @@
                         <div class="country-left">
                             <span class="country-number">${position + 1}</span>
                             <span class="country-name">${country.name}</span>
+                        </div>
+                        <div class="country-controls">
+                            <button class="move-btn" onclick="moveCountry(${position}, 'up')" ${position === 0 || !gameState.playing ? 'disabled' : ''}>▲</button>
+                            <button class="move-btn" onclick="moveCountry(${position}, 'down')" ${position === gameState.countries.length - 1 || !gameState.playing ? 'disabled' : ''}>▼</button>
                         </div>
                         <span class="country-area" style="display: none;">${country.area.toLocaleString()} km²</span>
                     </div>
@@ -665,6 +751,23 @@
             draggedPosition = null;
         }
 
+        function moveCountry(position, direction) {
+            if (!gameState.playing) return;
+            
+            const newOrder = [...gameState.userOrder];
+            
+            if (direction === 'up' && position > 0) {
+                // Swap with the item above
+                [newOrder[position], newOrder[position - 1]] = [newOrder[position - 1], newOrder[position]];
+            } else if (direction === 'down' && position < gameState.countries.length - 1) {
+                // Swap with the item below
+                [newOrder[position], newOrder[position + 1]] = [newOrder[position + 1], newOrder[position]];
+            }
+            
+            gameState.userOrder = newOrder;
+            renderCountries();
+        }
+
         function submitAnswer() {
             if (!gameState.playing) return;
 
@@ -683,7 +786,7 @@
                 }
             });
 
-            const accuracyScore = (correctPositions / 6) * 100;
+            const accuracyScore = (correctPositions / 4) * 100;
             const timeBonus = Math.max(0, 100 - gameState.timer);
             const totalScore = Math.round(accuracyScore + timeBonus * 0.5);
 
@@ -694,7 +797,7 @@
             const results = document.getElementById('results');
             results.innerHTML = `
                 <div class="results-main">
-                    You got <span class="highlight">${correctPositions}/6</span> in the correct position!
+                    You got <span class="highlight">${correctPositions}/4</span> in the correct position!
                 </div>
                 <div class="results-detail">
                     Accuracy: ${Math.round(accuracyScore)}% • Time: ${document.getElementById('timer').textContent}
